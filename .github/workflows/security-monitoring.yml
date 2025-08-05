@@ -1,0 +1,155 @@
+name: Security Monitoring
+
+on:
+  schedule:
+    # Run daily security scans at 03:00 UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  DB_NAME: wiki
+  DB_USER: wikijs
+  DB_PASS: test_password_123
+  DB_HOST: db
+  DB_PORT: 5432
+  HOST_PORT: 8080
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [db, wiki]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file for testing
+        run: |
+          cat > .env << EOF
+          DB_NAME=${{ env.DB_NAME }}
+          DB_USER=${{ env.DB_USER }}
+          DB_PASS=${{ env.DB_PASS }}
+          DB_HOST=${{ env.DB_HOST }}
+          DB_PORT=${{ env.DB_PORT }}
+          HOST_PORT=${{ env.HOST_PORT }}
+          EOF
+
+      - name: Build ${{ matrix.service }} image
+        run: |
+          docker-compose build ${{ matrix.service }}
+
+      - name: Run comprehensive Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'my_wiki-${{ matrix.service }}:latest'
+          format: 'json'
+          output: 'trivy-results-${{ matrix.service }}.json'
+
+      - name: Parse and display critical vulnerabilities
+        run: |
+          if [ -f "trivy-results-${{ matrix.service }}.json" ]; then
+            echo "## Security Scan Results for ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+            
+            # Count vulnerabilities by severity
+            critical=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results-${{ matrix.service }}.json)
+            high=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results-${{ matrix.service }}.json)
+            medium=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' trivy-results-${{ matrix.service }}.json)
+            
+            echo "- 🔴 Critical: $critical" >> $GITHUB_STEP_SUMMARY
+            echo "- 🟠 High: $high" >> $GITHUB_STEP_SUMMARY  
+            echo "- 🟡 Medium: $medium" >> $GITHUB_STEP_SUMMARY
+            
+            # List critical vulnerabilities
+            if [ "$critical" -gt 0 ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### Critical Vulnerabilities:" >> $GITHUB_STEP_SUMMARY
+              jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | "- " + .VulnerabilityID + ": " + .Title' trivy-results-${{ matrix.service }}.json >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: Upload scan results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results-${{ matrix.service }}
+          path: trivy-results-${{ matrix.service }}.json
+          retention-days: 30
+
+      - name: Fail on critical vulnerabilities
+        run: |
+          critical=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results-${{ matrix.service }}.json)
+          if [ "$critical" -gt 0 ]; then
+            echo "❌ Found $critical critical vulnerabilities in ${{ matrix.service }} image"
+            echo "Please review and update the base image or dependencies"
+            exit 1
+          fi
+
+  dependency-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for outdated base images
+        run: |
+          echo "## Base Image Status" >> $GITHUB_STEP_SUMMARY
+
+          # Check PostgreSQL image
+          echo "### PostgreSQL Image" >> $GITHUB_STEP_SUMMARY
+          current_postgres=$(grep "FROM postgres:" .docker/db/Dockerfile | cut -d: -f2)
+          echo "- Current: postgres:$current_postgres" >> $GITHUB_STEP_SUMMARY
+
+          # Check Wiki.js image  
+          echo "### Wiki.js Image" >> $GITHUB_STEP_SUMMARY
+          current_wiki=$(grep "FROM ghcr.io/requarks/wiki:" .docker/wiki/Dockerfile | cut -d: -f3)
+          echo "- Current: ghcr.io/requarks/wiki:$current_wiki" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **Recommendation**: Regularly check for newer versions of base images" >> $GITHUB_STEP_SUMMARY
+
+  create-security-report:
+    runs-on: ubuntu-latest
+    needs: [security-scan, dependency-check]
+    if: always()
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create security summary
+        run: |
+          echo "# 🔒 Security Monitoring Report" > security-report.md
+          echo "Generated on: $(date)" >> security-report.md
+          echo "" >> security-report.md
+
+          # Process each service if artifacts exist
+          for service in db wiki; do
+            if [ -d "trivy-results-$service" ]; then
+              echo "## $service Service" >> security-report.md
+              
+              if [ -f "trivy-results-$service/trivy-results-$service.json" ]; then
+                critical=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results-$service/trivy-results-$service.json)
+                high=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results-$service/trivy-results-$service.json)
+                medium=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' trivy-results-$service/trivy-results-$service.json)
+                
+                echo "- Critical: $critical" >> security-report.md
+                echo "- High: $high" >> security-report.md
+                echo "- Medium: $medium" >> security-report.md
+                echo "" >> security-report.md
+              fi
+            fi
+          done
+
+          echo "## Recommendations" >> security-report.md
+          echo "- Keep base images updated" >> security-report.md
+          echo "- Review and patch critical vulnerabilities immediately" >> security-report.md
+          echo "- Monitor security advisories for PostgreSQL and Wiki.js" >> security-report.md
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+          retention-days: 90

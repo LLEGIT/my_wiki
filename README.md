@@ -222,6 +222,73 @@ make run
 - **Firewall**: Ensure only necessary ports are exposed
 - **Updates**: Regularly update the Docker images for security patches
 
+## CI/CD and Security
+
+This project includes comprehensive GitHub Actions workflows for automated testing and security monitoring:
+
+### 🔄 Automated Workflows
+
+#### Docker Build and Security Scan (`docker-security.yml`)
+
+- **Triggers**: Push to main/master, Pull Requests, Weekly schedule
+- **Features**:
+  - Builds both Docker images (db and wiki)
+  - Runs Trivy vulnerability scans
+  - Performs integration testing
+  - Validates docker-compose configuration
+  - Lints Dockerfiles with Hadolint
+  - Uploads results to GitHub Security tab
+
+#### Security Monitoring (`security-monitoring.yml`)
+
+- **Triggers**: Daily schedule, Manual trigger
+- **Features**:
+  - Comprehensive daily security scans
+  - Vulnerability tracking and reporting
+  - Critical vulnerability alerts
+  - Security report artifacts
+  - Dependency vulnerability assessment
+
+#### Dependency Updates (`dependency-updates.yml`)
+
+- **Triggers**: Weekly schedule, Manual trigger
+- **Features**:
+  - Checks for base image updates
+  - Monitors PostgreSQL and Wiki.js versions
+  - Creates GitHub issues for available updates
+  - Provides maintenance recommendations
+  - Security update notifications
+
+### 🛡️ Security Features
+
+- **Vulnerability Scanning**: Automated Trivy scans for CRITICAL and HIGH severity issues
+- **Dockerfile Linting**: Hadolint analysis for best practices
+- **Base Image Monitoring**: Tracks updates for PostgreSQL and Wiki.js
+- **Security Reports**: Detailed vulnerability reports with recommendations
+- **Automated Alerts**: GitHub issues created for critical updates
+
+### 📊 Monitoring and Reporting
+
+- **Security Dashboard**: Results uploaded to GitHub Security tab
+- **Build Status**: Visible build status for all workflows
+- **Artifact Storage**: Security reports stored for 30-90 days
+- **Issue Tracking**: Automated issue creation for maintenance tasks
+
+### 🚀 Getting Started with CI/CD
+
+1. **Enable GitHub Actions**: Workflows run automatically when code is pushed
+2. **Review Security Tab**: Check GitHub Security tab for vulnerability reports
+3. **Monitor Issues**: Watch for auto-created dependency update issues
+4. **Manual Triggers**: Use workflow_dispatch for on-demand scans
+
+### 📋 Security Checklist
+
+- [ ] Review security scan results weekly
+- [ ] Update base images when new versions are available
+- [ ] Address CRITICAL and HIGH vulnerabilities promptly
+- [ ] Monitor dependency update issues
+- [ ] Test updates in staging before production
+
 ## Backup
 
 To backup your wiki data:

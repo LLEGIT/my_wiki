@@ -1,1 +1,20 @@
+# Environment variables (contains sensitive data)
 .env
+
+# Docker volumes data
+/data
+
+# Docker build cache
+.docker/*/cache/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

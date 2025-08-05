@@ -16,12 +16,20 @@ This project sets up a Wiki.js application with PostgreSQL database using Docker
 
 ```
 my_wiki/
-├── docker-compose.yaml    # Docker services configuration
-├── .env.dist             # Environment variables template
-├── .env                  # Environment variables (create from .env.dist)
-├── .gitignore            # Git ignore rules
-├── Makefile              # Convenient commands
-└── README.md             # This file
+├── .docker/                  # Custom Docker configurations
+│   ├── db/                   # PostgreSQL Dockerfile and configs
+│   │   ├── Dockerfile        # Custom PostgreSQL image
+│   │   └── init/             # Database initialization scripts
+│   └── wiki/                 # Wiki.js Dockerfile and configs
+│       ├── Dockerfile        # Custom Wiki.js image
+│       ├── config/           # Custom Wiki.js configurations
+│       └── scripts/          # Helper scripts (healthcheck, etc.)
+├── docker-compose.yaml       # Docker services configuration
+├── .env.dist                 # Environment variables template
+├── .env                      # Environment variables (create from .env.dist)
+├── .gitignore               # Git ignore rules
+├── Makefile                 # Convenient commands
+└── README.md                # This file
 ```
 
 ## Quick Start
@@ -55,18 +63,24 @@ my_wiki/
    - Change `DB_PASS` to a secure password
    - The `.env` file is ignored by git for security
 
-3. **Start the services**
+3. **Build and start the services**
 
-   Using Make (recommended):
+   Build the custom Docker images:
+
+   ```bash
+   make build
+   ```
+
+   Start the services:
 
    ```bash
    make run
    ```
 
-   Or using Docker Compose directly:
+   Or build and run in one step:
 
    ```bash
-   docker-compose up -d
+   docker-compose up -d --build
    ```
 
 4. **Access your wiki**
@@ -77,9 +91,11 @@ my_wiki/
 
 The project includes a Makefile with convenient commands:
 
+- `make build` - Build custom Docker images
 - `make run` - Start all services in detached mode
 - `make stop` - Stop all services
 - `make clean` - Stop services and remove volumes (⚠️ **This will delete all data!**)
+- `make rebuild` - Clean rebuild (stop, build from scratch, start)
 
 ## Services
 
@@ -118,6 +134,35 @@ To change the port where Wiki.js is accessible:
 
 1. Update `HOST_PORT` in the `.env` file
 2. Restart the services: `make stop && make run`
+
+## Customization
+
+### Custom Docker Images
+
+This project uses custom Dockerfiles instead of the base images directly, allowing for easy customization:
+
+#### Database Customization (`.docker/db/`)
+
+- **Dockerfile**: Based on `postgres:17-alpine` with additional tools
+- **init/**: Database initialization scripts that run on first startup
+- Add custom PostgreSQL extensions or configurations as needed
+
+#### Wiki.js Customization (`.docker/wiki/`)
+
+- **Dockerfile**: Based on `ghcr.io/requarks/wiki:2` with additional tools
+- **config/**: Custom Wiki.js configuration files
+- **scripts/**: Helper scripts including healthcheck
+- Add custom themes, plugins, or configurations as needed
+
+### Rebuilding Images
+
+After making changes to Dockerfiles or custom configurations:
+
+```bash
+make rebuild
+```
+
+This will stop services, rebuild images from scratch, and restart everything.
 
 ## Data Persistence
 

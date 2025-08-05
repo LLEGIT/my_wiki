@@ -139,7 +139,7 @@ jobs:
       - name: Build images and check for security updates
         run: |
           echo "Building images to check for security updates..."
-          docker-compose build --no-cache
+          docker compose build --no-cache
 
           echo "## 🔍 Security Update Check" >> $GITHUB_STEP_SUMMARY
           echo "Generated on: $(date)" >> $GITHUB_STEP_SUMMARY

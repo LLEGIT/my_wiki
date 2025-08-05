@@ -4,7 +4,7 @@ FROM postgres:17-alpine
 LABEL maintainer="my_wiki_project"
 LABEL description="Custom PostgreSQL database for Wiki.js"
 
-# Define build arguments that can be passed from docker-compose
+# Define build arguments that can be passed from docker compose
 ARG POSTGRES_DB=wiki
 ARG POSTGRES_USER=wikijs
 ARG POSTGRES_PASSWORD=changeme

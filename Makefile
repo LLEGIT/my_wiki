@@ -1,16 +1,16 @@
 build:
-	docker-compose build
+	docker compose build
 
 run:
-	docker-compose up -d
+	docker compose up -d
 
 stop:
-	docker-compose down
+	docker compose down
 
 clean:
-	docker-compose down --volumes --remove-orphans
+	docker compose down --volumes --remove-orphans
 
 rebuild:
-	docker-compose down
-	docker-compose build --no-cache
-	docker-compose up -d
+	docker compose down
+	docker compose build --no-cache
+	docker compose up -d

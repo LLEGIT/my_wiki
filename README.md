@@ -80,7 +80,7 @@ my_wiki/
    Or build and run in one step:
 
    ```bash
-   docker-compose up -d --build
+   docker compose up -d --build
    ```
 
 4. **Access your wiki**
@@ -198,13 +198,13 @@ If Wiki.js can't connect to the database:
 1. Ensure both services are running:
 
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 
 2. Check the logs:
    ```bash
-   docker-compose logs wiki
-   docker-compose logs db
+   docker compose logs wiki
+   docker compose logs db
    ```
 
 ### Reset Everything
@@ -235,7 +235,7 @@ This project includes comprehensive GitHub Actions workflows for automated testi
   - Builds both Docker images (db and wiki)
   - Runs Trivy vulnerability scans
   - Performs integration testing
-  - Validates docker-compose configuration
+  - Validates docker compose configuration
   - Lints Dockerfiles with Hadolint
   - Uploads results to GitHub Security tab
 
@@ -295,10 +295,10 @@ To backup your wiki data:
 
 ```bash
 # Backup database
-docker-compose exec db pg_dump -U wikijs wiki > wiki_backup.sql
+docker compose exec db pg_dump -U wikijs wiki > wiki_backup.sql
 
 # Backup can be restored with:
-# docker-compose exec -T db psql -U wikijs wiki < wiki_backup.sql
+# docker compose exec -T db psql -U wikijs wiki < wiki_backup.sql
 ```
 
 ## License

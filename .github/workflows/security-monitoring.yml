@@ -38,7 +38,7 @@ jobs:
 
       - name: Build ${{ matrix.service }} image
         run: |
-          docker-compose build ${{ matrix.service }}
+          docker compose build ${{ matrix.service }}
 
       - name: Run comprehensive Trivy scan
         uses: aquasecurity/trivy-action@master

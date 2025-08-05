@@ -45,7 +45,7 @@ jobs:
 
       - name: Build ${{ matrix.service }} image
         run: |
-          docker-compose build ${{ matrix.service }}
+          docker compose build ${{ matrix.service }}
 
       - name: Test ${{ matrix.service }} image creation
         run: |
@@ -94,19 +94,19 @@ jobs:
 
       - name: Build and start services
         run: |
-          docker-compose up -d --build
+          docker compose up -d --build
 
       - name: Wait for services to be ready
         run: |
           echo "Waiting for database to be ready..."
-          timeout 60 bash -c 'until docker-compose exec -T db pg_isready -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }}; do sleep 2; done'
+          timeout 60 bash -c 'until docker compose exec -T db pg_isready -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }}; do sleep 2; done'
 
           echo "Waiting for wiki to be ready..."
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.HOST_PORT }}/healthz || curl -f http://localhost:${{ env.HOST_PORT }}; do sleep 5; done'
 
       - name: Test database connection
         run: |
-          docker-compose exec -T db psql -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }} -c "SELECT version();"
+          docker compose exec -T db psql -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }} -c "SELECT version();"
 
       - name: Test wiki accessibility
         run: |
@@ -123,16 +123,16 @@ jobs:
         if: failure()
         run: |
           echo "=== Database logs ==="
-          docker-compose logs db
+          docker compose logs db
           echo "=== Wiki logs ==="
-          docker-compose logs wiki
+          docker compose logs wiki
           echo "=== Service status ==="
-          docker-compose ps
+          docker compose ps
 
       - name: Cleanup
         if: always()
         run: |
-          docker-compose down -v
+          docker compose down -v
 
   docker-compose-validate:
     runs-on: ubuntu-latest
@@ -153,8 +153,8 @@ jobs:
           HOST_PORT=8080
           EOF
 
-          # Validate docker-compose syntax
-          docker-compose config
+          # Validate docker compose syntax
+          docker compose config
 
       - name: Check for security best practices
         run: |
@@ -170,7 +170,7 @@ jobs:
 
           # Check if default passwords are used in compose file
           if grep -q "password.*=" docker-compose.yaml; then
-            echo "⚠️  Warning: Hardcoded passwords found in docker-compose.yaml"
+            echo "⚠️  Warning: Hardcoded passwords found in docker compose.yaml"
           else
             echo "✅ No hardcoded passwords in docker-compose.yaml"
           fi

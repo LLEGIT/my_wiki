@@ -4,7 +4,7 @@ FROM ghcr.io/requarks/wiki:2
 LABEL maintainer="my_wiki_project"
 LABEL description="Custom Wiki.js instance"
 
-# Define build arguments that can be passed from docker-compose
+# Define build arguments that can be passed from docker compose
 ARG DB_TYPE=postgres
 ARG DB_HOST=db
 ARG DB_PORT=5432
